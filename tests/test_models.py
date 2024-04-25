@@ -115,7 +115,8 @@ class TestProductModel(unittest.TestCase):
         self.assertIsNotNone(product.id)
         # Fetch the product back from the system using the product ID and store it in found_product
         found_product = Product.find(product.id)
-        # Assert that the properties of the found_product match with the properties of the original product object, such as id, name, description and price.
+        # Assert that the properties of the found_product match with the properties of the original product object,
+        # such as id, name, description and price.
         self.assertEqual(found_product.id, product.id)
         self.assertEqual(found_product.name, product.name)
         self.assertEqual(found_product.description, product.description)
@@ -196,3 +197,38 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(found.count(), count)
         for product in found:
             self.assertEqual(product.category, category)
+
+    def test_find_by_price(self):
+        """It should Find Products by Price"""
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        price = products[0].price
+        count = len([product for product in products if product.price == price])
+        found = Product.find_by_price(price)
+        self.assertEqual(found.count(), count)
+        for product in found:
+            self.assertEqual(product.price, price)
+        price = str(price)
+        found = Product.find_by_price(price)
+        for product in found:
+            self.assertEqual(product.price, Decimal(price))
+
+    def test_deserialize(self):
+        """It should deserialize a dictionary of products"""
+        product = ProductFactory.create()
+
+        product.price = 'badprice'
+        self.assertRaises(Exception, product.deserialize, product)
+        product = ProductFactory.create()
+        product.available = product
+        self.assertRaises(Exception, product.deserialize, product)
+        product = ProductFactory.create()
+        product.available = Decimal(10.01)
+        self.assertRaises(Exception, product.deserialize, product)
+
+    def test_update(self):
+        """It should update a value in the database"""
+        product = ProductFactory.create()
+        product.id = None
+        self.assertRaises(Exception, product.update, self)
